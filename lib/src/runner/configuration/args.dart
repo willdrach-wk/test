@@ -8,6 +8,7 @@ import 'package:args/args.dart';
 import 'package:boolean_selector/boolean_selector.dart';
 
 import '../../backend/runtime.dart';
+import '../../backend/compiler.dart';
 import '../../frontend/timeout.dart';
 import '../configuration.dart';
 import 'runtime_selection.dart';
@@ -66,6 +67,12 @@ final ArgParser _parser = (() {
       help: 'The platform(s) on which to run the tests.\n'
           '[vm (default), '
           '${allRuntimes.map((runtime) => runtime.identifier).join(", ")}]',
+      allowMultiple: true);
+  parser.addOption("compiler",
+      abbr: 'c',
+      help: 'The compiler(s) to use to compile the tests to JS.',
+      defaultsTo: 'dart2js',
+      allowed: Compiler.all.map((compiler) => compiler.identifier).toList(),
       allowMultiple: true);
   parser.addOption("preset",
       abbr: 'P',
@@ -224,6 +231,7 @@ class _Parser {
         runtimes: (_ifParsed('platform') as List<String>)
             ?.map((runtime) => new RuntimeSelection(runtime))
             ?.toList(),
+        compilers: (_ifParsed('compiler') as List<String>)?.map(Compiler.find),
         runSkipped: _ifParsed('run-skipped'),
         chosenPresets: _ifParsed('preset') as List<String>,
         paths: _options.rest.isEmpty ? null : _options.rest,
