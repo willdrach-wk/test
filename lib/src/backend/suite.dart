@@ -28,14 +28,12 @@ class Suite {
 
   /// Creates a new suite containing [entires].
   ///
-  /// If [platform] and/or [os] are passed, [group] is filtered to match that
-  /// platform information.
-  ///
-  /// If [os] is passed without [platform], throws an [ArgumentError].
+  /// If [platform], [os] and/or [compiler] are passed, [group] is filtered to
+  /// match that platform information.
   Suite(Group group, this.platform, {this.path})
       : group = _filterGroup(group, platform);
 
-  /// Returns [entries] filtered according to [platform] and [os].
+  /// Returns [entries] filtered according to [platform], [os], and [compiler].
   ///
   /// Gracefully handles [platform] being null.
   static Group _filterGroup(Group group, SuitePlatform platform) {

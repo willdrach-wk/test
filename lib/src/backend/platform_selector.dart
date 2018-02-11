@@ -5,6 +5,7 @@
 import 'package:boolean_selector/boolean_selector.dart';
 import 'package:source_span/source_span.dart';
 
+import 'compiler.dart';
 import 'operating_system.dart';
 import 'runtime.dart';
 import 'suite_platform.dart';
@@ -13,7 +14,8 @@ import 'suite_platform.dart';
 final _universalValidVariables =
     new Set<String>.from(["posix", "dart-vm", "browser", "js", "blink"])
       ..addAll(Runtime.builtIn.map((runtime) => runtime.identifier))
-      ..addAll(OperatingSystem.all.map((os) => os.identifier));
+      ..addAll(OperatingSystem.all.map((os) => os.identifier))
+      ..addAll(Compiler.all.map((compiler) => compiler.identifier));
 
 /// An expression for selecting certain platforms, including operating systems
 /// and browsers.
@@ -70,13 +72,12 @@ class PlatformSelector {
   }
 
   /// Returns whether the selector matches the given [platform].
-  ///
-  /// [os] defaults to [OperatingSystem.none].
   bool evaluate(SuitePlatform platform) {
     return _inner.evaluate((variable) {
       if (variable == platform.runtime.identifier) return true;
       if (variable == platform.runtime.parent?.identifier) return true;
       if (variable == platform.os.identifier) return true;
+      if (variable == platform.compiler.identifier) return true;
       switch (variable) {
         case "dart-vm":
           return platform.runtime.isDartVM;

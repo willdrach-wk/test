@@ -6,6 +6,7 @@ import 'package:boolean_selector/boolean_selector.dart';
 import 'package:collection/collection.dart';
 import 'package:source_span/source_span.dart';
 
+import '../../backend/compiler.dart';
 import '../../backend/metadata.dart';
 import '../../backend/platform_selector.dart';
 import '../../backend/suite_platform.dart';
@@ -57,6 +58,10 @@ class SuiteConfiguration {
       ? const ["vm"]
       : new List.unmodifiable(_runtimes.map((runtime) => runtime.name));
   final List<RuntimeSelection> _runtimes;
+
+  /// The set of compilers with which to compile tests.
+  List<Compiler> get compilers => _compilers ?? const [Compiler.dart2js];
+  final List<Compiler> _compilers;
 
   /// Only run tests whose tags match this selector.
   ///
@@ -129,6 +134,7 @@ class SuiteConfiguration {
       String precompiledPath,
       Iterable<Pattern> patterns,
       Iterable<RuntimeSelection> runtimes,
+      Iterable<Compiler> compilers,
       BooleanSelector includeTags,
       BooleanSelector excludeTags,
       Map<BooleanSelector, SuiteConfiguration> tags,
@@ -150,6 +156,7 @@ class SuiteConfiguration {
         precompiledPath: precompiledPath,
         patterns: patterns,
         runtimes: runtimes,
+        compilers: compilers,
         includeTags: includeTags,
         excludeTags: excludeTags,
         tags: tags,
@@ -177,6 +184,7 @@ class SuiteConfiguration {
       this.precompiledPath,
       Iterable<Pattern> patterns,
       Iterable<RuntimeSelection> runtimes,
+      Iterable<Compiler> compilers,
       BooleanSelector includeTags,
       BooleanSelector excludeTags,
       Map<BooleanSelector, SuiteConfiguration> tags,
@@ -187,6 +195,7 @@ class SuiteConfiguration {
         dart2jsArgs = _list(dart2jsArgs) ?? const [],
         patterns = new UnmodifiableSetView(patterns?.toSet() ?? new Set()),
         _runtimes = _list(runtimes),
+        _compilers = _list(compilers),
         includeTags = includeTags ?? BooleanSelector.all,
         excludeTags = excludeTags ?? BooleanSelector.none,
         tags = _map(tags),
@@ -235,6 +244,7 @@ class SuiteConfiguration {
         precompiledPath: other.precompiledPath ?? precompiledPath,
         patterns: patterns.union(other.patterns),
         runtimes: other._runtimes ?? _runtimes,
+        compilers: other._compilers ?? _compilers,
         includeTags: includeTags.intersection(other.includeTags),
         excludeTags: excludeTags.union(other.excludeTags),
         tags: _mergeConfigMaps(tags, other.tags),
@@ -254,6 +264,7 @@ class SuiteConfiguration {
       String precompiledPath,
       Iterable<Pattern> patterns,
       Iterable<RuntimeSelection> runtimes,
+      Iterable<Compiler> compilers,
       BooleanSelector includeTags,
       BooleanSelector excludeTags,
       Map<BooleanSelector, SuiteConfiguration> tags,
@@ -275,6 +286,7 @@ class SuiteConfiguration {
         precompiledPath: precompiledPath ?? this.precompiledPath,
         patterns: patterns ?? this.patterns,
         runtimes: runtimes ?? _runtimes,
+        compilers: compilers ?? _compilers,
         includeTags: includeTags ?? this.includeTags,
         excludeTags: excludeTags ?? this.excludeTags,
         tags: tags ?? this.tags,

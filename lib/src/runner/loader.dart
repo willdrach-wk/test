@@ -223,45 +223,64 @@ class Loader {
       var runtime = findRuntime(runtimeName);
       assert(runtime != null, 'Unknown platform "$runtimeName".');
 
-      var platform =
-          new SuitePlatform(runtime, os: runtime.isBrowser ? null : currentOS);
-      if (!suiteConfig.metadata.testOn.evaluate(platform)) {
-        continue;
-      }
-
-      var platformConfig = suiteConfig.forPlatform(platform);
-
-      // Don't load a skipped suite.
-      if (platformConfig.metadata.skip && !platformConfig.runSkipped) {
-        yield new LoadSuite.forSuite(new RunnerSuite(
-            const PluginEnvironment(),
-            platformConfig,
-            new Group.root(
-                [new LocalTest("(suite)", platformConfig.metadata, () {})],
-                metadata: platformConfig.metadata),
-            platform,
-            path: path));
-        continue;
-      }
-
-      var name = (platform.runtime.isJS ? "compiling " : "loading ") + path;
-      yield new LoadSuite(name, platformConfig, platform, () async {
-        var memo = _platformPlugins[platform.runtime];
-
-        try {
-          var plugin = await memo.runOnce(_platformCallbacks[platform.runtime]);
-          _customizePlatform(plugin, platform.runtime);
-          var suite = await plugin.load(path, platform, platformConfig,
-              {"platformVariables": _runtimeVariables.toList()});
-          if (suite != null) _suites.add(suite);
-          return suite;
-        } catch (error, stackTrace) {
-          if (error is LoadException) rethrow;
-          await new Future.error(new LoadException(path, error), stackTrace);
-          return null;
+      if (!runtime.isJS) {
+        var suite = await _loadFileOnPlatform(
+            path,
+            suiteConfig,
+            new SuitePlatform(runtime,
+                os: runtime.isBrowser ? null : currentOS));
+        if (suite != null) yield suite;
+      } else {
+        for (var compiler in suiteConfig.compilers) {
+          var suite = await _loadFileOnPlatform(path, suiteConfig,
+              new SuitePlatform(runtime, compiler: compiler));
+          if (suite != null) yield suite;
         }
-      }, path: path);
+      }
     }
+  }
+
+  /// Loads a single suite from the file at [path] according to [suiteConfig] on
+  /// [platform], compiled with [compiler].
+  ///
+  /// If the suite doesn't support [platform] and/or [compiler], returns `null`.
+  Future<LoadSuite> _loadFileOnPlatform(String path,
+      SuiteConfiguration suiteConfig, SuitePlatform platform) async {
+    if (!suiteConfig.metadata.testOn.evaluate(platform)) {
+      return null;
+    }
+
+    var platformConfig = suiteConfig.forPlatform(platform);
+
+    // Don't load a skipped suite.
+    if (platformConfig.metadata.skip && !platformConfig.runSkipped) {
+      return new LoadSuite.forSuite(new RunnerSuite(
+          const PluginEnvironment(),
+          platformConfig,
+          new Group.root(
+              [new LocalTest("(suite)", platformConfig.metadata, () {})],
+              metadata: platformConfig.metadata),
+          platform,
+          path: path));
+    }
+
+    var name = (platform.runtime.isJS ? "compiling " : "loading ") + path;
+    return new LoadSuite(name, platformConfig, platform, () async {
+      var memo = _platformPlugins[platform.runtime];
+
+      try {
+        var plugin = await memo.runOnce(_platformCallbacks[platform.runtime]);
+        _customizePlatform(plugin, platform.runtime);
+        var suite = await plugin.load(path, platform, platformConfig,
+            {"platformVariables": _runtimeVariables.toList()});
+        if (suite != null) _suites.add(suite);
+        return suite;
+      } catch (error, stackTrace) {
+        if (error is LoadException) rethrow;
+        await new Future.error(new LoadException(path, error), stackTrace);
+        return null;
+      }
+    }, path: path);
   }
 
   /// Passes user-defined settings to [plugin] if necessary.
