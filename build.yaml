@@ -1,0 +1,17 @@
+builders:
+  _bootstrap:
+    target: test
+    import: package:test/src/builder.dart
+    builder_factories: [bootstrapBuilder]
+    required_inputs: [.dart, .ddc.js, .module]
+    build_extensions: {.dart: [._test]}
+
+targets:
+  test:
+    builders:
+      test|_bootstrap:
+        enabled: true
+        generate_for:
+        - lib/src/bootstrap/browser.dart
+        - lib/src/bootstrap/node.dart
+        
