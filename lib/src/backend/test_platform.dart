@@ -15,11 +15,6 @@ class TestPlatform {
   static const TestPlatform dartium = const TestPlatform("Dartium", "dartium",
       isBrowser: true, isBlink: true, isDartVM: true);
 
-  /// Dartium content shell.
-  static const TestPlatform contentShell = const TestPlatform(
-      "Dartium Content Shell", "content-shell",
-      isBrowser: true, isBlink: true, isDartVM: true, isHeadless: true);
-
   /// Google Chrome.
   static const TestPlatform chrome = const TestPlatform("Chrome", "chrome",
       isBrowser: true, isJS: true, isBlink: true);
@@ -50,7 +45,6 @@ class TestPlatform {
   static const List<TestPlatform> builtIn = const [
     TestPlatform.vm,
     TestPlatform.dartium,
-    TestPlatform.contentShell,
     TestPlatform.chrome,
     TestPlatform.phantomJS,
     TestPlatform.firefox,

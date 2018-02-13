@@ -214,11 +214,9 @@ void main() {
   group("runs successful tests", () {
     test("on a JS and non-JS browser", () async {
       await d.file("test.dart", _success).create();
-      var test =
-          await runTest(["-p", "dartium", "-p", "chrome", "test.dart"]);
+      var test = await runTest(["-p", "dartium", "-p", "chrome", "test.dart"]);
 
-      expect(test.stdoutStream(),
-          neverEmits(contains("[Dartium] compiling")));
+      expect(test.stdoutStream(), neverEmits(contains("[Dartium] compiling")));
       expect(test.stdout, emitsThrough(contains("[Chrome] compiling")));
       await test.shouldExit(0);
     }, tags: ['chrome', 'dartium']);

@@ -12,8 +12,8 @@ example:
 # This package's tests are very slow. Double the default timeout.
 timeout: 2x
 
-# This is a browser-only package, so test on content shell by default.
-platforms: [content-shell]
+# This is a browser-only package, so test on Chrome by default.
+platforms: [chrome]
 
 tags:
   # Integration tests are even slower, so increase the timeout again.
@@ -290,7 +290,7 @@ quickly select a set of tests.
 presets:
   # Pass "-P windowless" to run tests that don't open browser windows.
   windowless:
-    include_tags: !browser || content-shell
+    include_tags: !browser || chrome
 ```
 
 This field is not supported in the
@@ -309,7 +309,7 @@ quickly select a set of tests.
 presets:
   # Pass "-P windowless" to run tests that don't open browser windows.
   windowless:
-    exclude_tags: browser && !content-shell
+    exclude_tags: browser && !chrome
 ```
 
 This field is not supported in the
@@ -323,7 +323,7 @@ platforms are included, the test runner will default to running tests on all of
 them. This defaults to `[vm]`.
 
 ```yaml
-platforms: [content_shell]
+platforms: [vm, chrome]
 
 platforms:
 - chrome

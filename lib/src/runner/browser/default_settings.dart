@@ -14,10 +14,6 @@ final defaultSettings = new UnmodifiableMapView({
       macOSExecutable:
           '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
       windowsExecutable: r'Google\Chrome\Application\chrome.exe'),
-  TestPlatform.contentShell: new ExecutableSettings(
-      linuxExecutable: 'content_shell',
-      macOSExecutable: 'content_shell',
-      windowsExecutable: 'content_shell.exe'),
   TestPlatform.dartium: new ExecutableSettings(
       linuxExecutable: 'dartium',
       macOSExecutable: 'dartium',

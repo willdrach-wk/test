@@ -301,11 +301,14 @@ class SuiteConfiguration {
       for (var selection in _platforms) {
         if (!allPlatforms
             .any((platform) => platform.identifier == selection.name)) {
+          var message = selection.name == 'content-shell'
+              ? 'The "content-shell" platform is no longer supported.'
+              : 'Unknown platform "${selection.name}".';
+
           if (selection.span != null) {
-            throw new SourceSpanFormatException(
-                'Unknown platform "${selection.name}".', selection.span);
+            throw new SourceSpanFormatException(message, selection.span);
           } else {
-            throw new FormatException('Unknown platform "${selection.name}".');
+            throw new FormatException(message);
           }
         }
       }

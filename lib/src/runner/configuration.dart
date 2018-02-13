@@ -411,9 +411,15 @@ class Configuration {
     for (var settings in overridePlatforms.values) {
       if (!allPlatforms
           .any((platform) => platform.identifier == settings.identifier)) {
-        throw new SourceSpanFormatException(
-            'Unknown platform "${settings.identifier}".',
-            settings.identifierSpan);
+        if (settings.identifier == 'content-shell') {
+          throw new SourceSpanFormatException(
+              'The "content-shell" platform is no longer supported.',
+              settings.identifierSpan);
+        } else {
+          throw new SourceSpanFormatException(
+              'Unknown platform "${settings.identifier}".',
+              settings.identifierSpan);
+        }
       }
     }
 

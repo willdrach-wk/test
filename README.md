@@ -206,9 +206,6 @@ identifiers are defined:
 
 * `dartium`: Whether the test is running on Dartium.
 
-* `content-shell`: Whether the test is running on the headless Dartium content
-  shell.
-
 * `chrome`: Whether the test is running on Google Chrome.
 
 * `phantomjs`: Whether the test is running on
@@ -265,20 +262,6 @@ make sure there's an executable called `dartium` (on Mac OS or Linux) or
 
 [Dartium]: https://www.dartlang.org/tools/dartium/
 [homebrew]: https://github.com/dart-lang/homebrew-dart
-
-Similarly, tests can be run on the headless Dartium content shell by passing `-p
-content-shell`. The content shell is installed along with Dartium when using
-Homebrew. Otherwise, you can downloaded it manually [from this
-page][content_shell]; if you do, make sure the executable named `content_shell`
-(on Mac OS or Linux) or `content_shell.exe` (on Windows) is on your system path.
-Note content_shell on linux requires the font packages ttf-kochi-mincho and ttf-kochi-gothic.
-
-[content_shell]: http://gsdview.appspot.com/dart-archive/channels/stable/release/latest/dartium/
-
-[In the future][issue 63], there will be a more explicit way to configure the
-location of both the Dartium and content shell executables.
-
-[issue 63]: https://github.com/dart-lang/test/issues/63
 
 ### Running Tests on Node.js
 
@@ -706,14 +689,13 @@ passed as command-line arguments:
 # This package's tests are very slow. Double the default timeout.
 timeout: 2x
 
-# This is a browser-only package, so test on content shell by default.
-platforms: [content-shell]
+# This is a browser-only package, so test on Chrome by default.
+platforms: [chrome]
 ```
 
 The configuration file sets new defaults. These defaults can still be overridden
 by command-line arguments, just like the built-in defaults. In the example
-above, you could pass `--platform chrome` to run on Chrome instead of the
-Dartium content shell.
+above, you could pass `--platform firefox` to run on Firefox instead of Chrome.
 
 A configuration file can do much more than just set global defaults. See
 [the full documentation][package config] for more details.
@@ -733,7 +715,7 @@ The first step when debugging is to pass the `--pause-after-load` flag to the
 test runner. This pauses the browser after each test suite has loaded, so that
 you have time to open the development tools and set breakpoints. For Dartium,
 the test runner will print the Observatory URL for you. For PhantomJS, it will
-print the remote debugger URL. For content shell, it'll print both!
+print the remote debugger URL.
 
 Once you've set breakpoints, either click the big arrow in the middle of the web
 page or press Enter in your terminal to start the tests running. When you hit a

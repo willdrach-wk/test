@@ -87,7 +87,6 @@ class Loader {
     _registerPlatformPlugin([TestPlatform.nodeJS], () => new NodePlatform());
     _registerPlatformPlugin([
       TestPlatform.dartium,
-      TestPlatform.contentShell,
       TestPlatform.chrome,
       TestPlatform.phantomJS,
       TestPlatform.firefox,
@@ -132,8 +131,14 @@ class Loader {
 
       var parent = _platformsByIdentifier[customPlatform.parent];
       if (parent == null) {
-        throw new SourceSpanFormatException(
-            'Unknown platform.', customPlatform.parentSpan);
+        if (customPlatform.parent == 'content-shell') {
+          throw new SourceSpanFormatException(
+              'The content-shell platform is no longer supported.',
+              customPlatform.parentSpan);
+        } else {
+          throw new SourceSpanFormatException(
+              'Unknown platform.', customPlatform.parentSpan);
+        }
       }
 
       var platform =

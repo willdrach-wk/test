@@ -1,3 +1,9 @@
+## 0.12.30+4
+
+* Drop support for the Dartium content shell. This is not considered breaking,
+  since all existing versions of the content shell executable have expired and
+  no longer work.
+
 ## 0.12.30+3
 
 * Fix a memory leak when loading browser tests.

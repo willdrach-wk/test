@@ -20,7 +20,6 @@ import '../plugin/platform_helpers.dart';
 import '../runner_suite.dart';
 import 'browser.dart';
 import 'chrome.dart';
-import 'content_shell.dart';
 import 'dartium.dart';
 import 'firefox.dart';
 import 'internet_explorer.dart';
@@ -140,8 +139,6 @@ class BrowserManager {
     switch (browser.root) {
       case TestPlatform.dartium:
         return new Dartium(url, settings: settings, debug: debug);
-      case TestPlatform.contentShell:
-        return new ContentShell(url, settings: settings, debug: debug);
       case TestPlatform.chrome:
         return new Chrome(url, settings: settings, debug: debug);
       case TestPlatform.phantomJS:
