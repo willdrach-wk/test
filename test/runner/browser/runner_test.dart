@@ -105,16 +105,16 @@ void main() {
 </html>
 """).create();
 
-      var test = await runTest(["-p", "content-shell", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "test.dart"]);
       expect(
           test.stdout,
           containsInOrder([
-            '-1: loading test.dart [E]',
+            '-1: compiling test.dart [E]',
             'Failed to load "test.dart": "test.html" must contain '
                 '<script src="packages/test/dart.js"></script>.'
           ]));
       await test.shouldExit(1);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     test("a custom HTML file has no link", () async {
       await d.file("test.dart", "void main() {}").create();
@@ -127,16 +127,16 @@ void main() {
 </html>
 """).create();
 
-      var test = await runTest(["-p", "content-shell", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "test.dart"]);
       expect(
           test.stdout,
           containsInOrder([
-            '-1: loading test.dart [E]',
+            '-1: compiling test.dart [E]',
             'Failed to load "test.dart": Expected exactly 1 '
                 '<link rel="x-dart-test"> in test.html, found 0.'
           ]));
       await test.shouldExit(1);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     test("a custom HTML file has too many links", () async {
       await d.file("test.dart", "void main() {}").create();
@@ -151,16 +151,16 @@ void main() {
 </html>
 """).create();
 
-      var test = await runTest(["-p", "content-shell", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "test.dart"]);
       expect(
           test.stdout,
           containsInOrder([
-            '-1: loading test.dart [E]',
+            '-1: compiling test.dart [E]',
             'Failed to load "test.dart": Expected exactly 1 '
                 '<link rel="x-dart-test"> in test.html, found 2.'
           ]));
       await test.shouldExit(1);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     test("a custom HTML file has no href in the link", () async {
       await d.file("test.dart", "void main() {}").create();
@@ -174,16 +174,16 @@ void main() {
 </html>
 """).create();
 
-      var test = await runTest(["-p", "content-shell", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "test.dart"]);
       expect(
           test.stdout,
           containsInOrder([
-            '-1: loading test.dart [E]',
+            '-1: compiling test.dart [E]',
             'Failed to load "test.dart": Expected <link rel="x-dart-test"> in '
                 'test.html to have an "href" attribute.'
           ]));
       await test.shouldExit(1);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     test("a custom HTML file has an invalid test URL", () async {
       await d.file("test.dart", "void main() {}").create();
@@ -197,15 +197,15 @@ void main() {
 </html>
 """).create();
 
-      var test = await runTest(["-p", "content-shell", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "test.dart"]);
       expect(
           test.stdout,
           containsInOrder([
-            '-1: loading test.dart [E]',
+            '-1: compiling test.dart [E]',
             'Failed to load "test.dart": Failed to load script at '
           ]));
       await test.shouldExit(1);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     // TODO(nweiz): test what happens when a test file is unreadable once issue
     // 15078 is fixed.
@@ -215,22 +215,21 @@ void main() {
     test("on a JS and non-JS browser", () async {
       await d.file("test.dart", _success).create();
       var test =
-          await runTest(["-p", "content-shell", "-p", "chrome", "test.dart"]);
+          await runTest(["-p", "dartium", "-p", "chrome", "test.dart"]);
 
       expect(test.stdoutStream(),
-          neverEmits(contains("[Dartium Content Shell] compiling")));
+          neverEmits(contains("[Dartium] compiling")));
       expect(test.stdout, emitsThrough(contains("[Chrome] compiling")));
       await test.shouldExit(0);
-    }, tags: ['chrome', 'content-shell']);
+    }, tags: ['chrome', 'dartium']);
 
     test("on a browser and the VM", () async {
       await d.file("test.dart", _success).create();
-      var test =
-          await runTest(["-p", "content-shell", "-p", "vm", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "-p", "vm", "test.dart"]);
 
       expect(test.stdout, emitsThrough(contains("+2: All tests passed!")));
       await test.shouldExit(0);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     test("with setUpAll", () async {
       await d.file("test.dart", r"""
@@ -243,11 +242,11 @@ void main() {
           }
           """).create();
 
-      var test = await runTest(["-p", "content-shell", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "test.dart"]);
       expect(test.stdout, emitsThrough(contains('+0: (setUpAll)')));
       expect(test.stdout, emits('in setUpAll'));
       await test.shouldExit(0);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     test("with tearDownAll", () async {
       await d.file("test.dart", r"""
@@ -260,11 +259,11 @@ void main() {
           }
           """).create();
 
-      var test = await runTest(["-p", "content-shell", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "test.dart"]);
       expect(test.stdout, emitsThrough(contains('+1: (tearDownAll)')));
       expect(test.stdout, emits('in tearDownAll'));
       await test.shouldExit(0);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     // Regression test; this broke in 0.12.0-beta.9.
     test("on a file in a subdirectory", () async {
@@ -302,11 +301,11 @@ void main() {
 """).create();
       });
 
-      test("on content shell", () async {
-        var test = await runTest(["-p", "content-shell", "test.dart"]);
+      test("on Dartium", () async {
+        var test = await runTest(["-p", "dartium", "test.dart"]);
         expect(test.stdout, emitsThrough(contains("+1: All tests passed!")));
         await test.shouldExit(0);
-      }, tags: 'content-shell');
+      }, tags: 'dartium');
 
       test("on Chrome", () async {
         var test = await runTest(["-p", "chrome", "test.dart"]);
@@ -330,10 +329,10 @@ void main() {
 </html>
 """).create();
 
-        var test = await runTest(["-p", "content-shell", "test.dart"]);
+        var test = await runTest(["-p", "chrome", "test.dart"]);
         expect(test.stdout, emitsThrough(contains("+1: All tests passed!")));
         await test.shouldExit(0);
-      }, tags: 'content-shell');
+      }, tags: 'chrome');
     });
   });
 
@@ -352,11 +351,10 @@ void main() {
 }
 """).create();
 
-      var test =
-          await runTest(["-p", "content-shell", "-p", "vm", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "-p", "vm", "test.dart"]);
       expect(test.stdout, emitsThrough(contains("+1 -1: Some tests failed.")));
       await test.shouldExit(1);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     test("that fail only on the VM", () async {
       await d.file("test.dart", """
@@ -372,11 +370,10 @@ void main() {
 }
 """).create();
 
-      var test =
-          await runTest(["-p", "content-shell", "-p", "vm", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "-p", "vm", "test.dart"]);
       expect(test.stdout, emitsThrough(contains("+1 -1: Some tests failed.")));
       await test.shouldExit(1);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     group("with a custom HTML file", () {
       setUp(() async {
@@ -405,11 +402,11 @@ void main() {
 """).create();
       });
 
-      test("on content shell", () async {
-        var test = await runTest(["-p", "content-shell", "test.dart"]);
+      test("on Dartium", () async {
+        var test = await runTest(["-p", "dartium", "test.dart"]);
         expect(test.stdout, emitsThrough(contains("-1: Some tests failed.")));
         await test.shouldExit(1);
-      }, tags: 'content-shell');
+      }, tags: 'dartium');
 
       test("on Chrome", () async {
         var test = await runTest(["-p", "chrome", "test.dart"]);
@@ -441,10 +438,10 @@ void main() {
 }
 """).create();
 
-    var test = await runTest(["-p", "content-shell", "test.dart"]);
+    var test = await runTest(["-p", "chrome", "test.dart"]);
     expect(test.stdout, emitsInOrder([emitsThrough("Hello,"), "world!"]));
     await test.shouldExit(0);
-  }, tags: 'content-shell');
+  }, tags: 'chrome');
 
   test("dartifies stack traces for JS-compiled tests by default", () async {
     await d.file("test.dart", _failure).create();
@@ -483,13 +480,13 @@ void main() {
 }
 ''').create();
 
-    var test = await runTest(["-p", "content-shell", "test.dart"]);
+    var test = await runTest(["-p", "chrome", "test.dart"]);
     expect(
         test.stdout,
         containsInOrder(
             ["Test timed out after 0 seconds.", "-1: Some tests failed."]));
     await test.shouldExit(1);
-  }, tags: 'content-shell');
+  }, tags: 'chrome');
 
   group("with onPlatform", () {
     test("respects matching Skips", () async {
@@ -503,10 +500,10 @@ void main() {
 }
 ''').create();
 
-      var test = await runTest(["-p", "content-shell", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "test.dart"]);
       expect(test.stdout, emitsThrough(contains("+0 ~1: All tests skipped.")));
       await test.shouldExit(0);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     test("ignores non-matching Skips", () async {
       await d.file("test.dart", '''
@@ -519,10 +516,10 @@ void main() {
 }
 ''').create();
 
-      var test = await runTest(["-p", "content-shell", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "test.dart"]);
       expect(test.stdout, emitsThrough(contains("+1: All tests passed!")));
       await test.shouldExit(0);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     test("respects matching Timeouts", () async {
       await d.file("test.dart", '''
@@ -540,13 +537,13 @@ void main() {
 }
 ''').create();
 
-      var test = await runTest(["-p", "content-shell", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "test.dart"]);
       expect(
           test.stdout,
           containsInOrder(
               ["Test timed out after 0 seconds.", "-1: Some tests failed."]));
       await test.shouldExit(1);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     test("ignores non-matching Timeouts", () async {
       await d.file("test.dart", '''
@@ -561,10 +558,10 @@ void main() {
 }
 ''').create();
 
-      var test = await runTest(["-p", "content-shell", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "test.dart"]);
       expect(test.stdout, emitsThrough(contains("+1: All tests passed!")));
       await test.shouldExit(0);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     test("applies matching platforms in order", () async {
       await d.file("test.dart", '''
@@ -583,14 +580,14 @@ void main() {
 }
 ''').create();
 
-      var test = await runTest(["-p", "content-shell", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "test.dart"]);
       expect(test.stdoutStream(), neverEmits(contains("Skip: first")));
       expect(test.stdoutStream(), neverEmits(contains("Skip: second")));
       expect(test.stdoutStream(), neverEmits(contains("Skip: third")));
       expect(test.stdoutStream(), neverEmits(contains("Skip: fourth")));
       expect(test.stdout, emitsThrough(contains("Skip: fifth")));
       await test.shouldExit(0);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
   });
 
   group("with an @OnPlatform annotation", () {
@@ -607,10 +604,10 @@ void main() {
 }
 ''').create();
 
-      var test = await runTest(["-p", "content-shell", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "test.dart"]);
       expect(test.stdout, emitsThrough(contains("~1: All tests skipped.")));
       await test.shouldExit(0);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     test("ignores non-matching Skips", () async {
       await d.file("test.dart", '''
@@ -625,10 +622,10 @@ void main() {
 }
 ''').create();
 
-      var test = await runTest(["-p", "content-shell", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "test.dart"]);
       expect(test.stdout, emitsThrough(contains("+1: All tests passed!")));
       await test.shouldExit(0);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     test("respects matching Timeouts", () async {
       await d.file("test.dart", '''
@@ -648,13 +645,13 @@ void main() {
 }
 ''').create();
 
-      var test = await runTest(["-p", "content-shell", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "test.dart"]);
       expect(
           test.stdout,
           containsInOrder(
               ["Test timed out after 0 seconds.", "-1: Some tests failed."]));
       await test.shouldExit(1);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
 
     test("ignores non-matching Timeouts", () async {
       await d.file("test.dart", '''
@@ -671,8 +668,8 @@ void main() {
 }
 ''').create();
 
-      var test = await runTest(["-p", "content-shell", "test.dart"]);
+      var test = await runTest(["-p", "chrome", "test.dart"]);
       await test.shouldExit(0);
-    }, tags: 'content-shell');
+    }, tags: 'chrome');
   });
 }
