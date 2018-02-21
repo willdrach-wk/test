@@ -4,7 +4,7 @@
 
 import "../runner/browser/post_message_channel.dart";
 import "../runner/plugin/remote_platform_helpers.dart";
-import "../util/stack_trace_mapper.dart";
+import "../runner/js/handle_source_map.dart";
 
 /// Bootstraps a browser test to communicate with the test runner.
 ///
@@ -12,10 +12,6 @@ import "../util/stack_trace_mapper.dart";
 /// transformer which will bootstrap your test and call this method.
 void internalBootstrapBrowserTest(Function getMain()) {
   var channel =
-      serializeSuite(getMain, hidePrints: false, beforeLoad: () async {
-    var serialized = await suiteChannel("test.browser.mapper").stream.first;
-    if (serialized == null) return;
-    setStackTraceMapper(StackTraceMapper.deserialize(serialized));
-  });
+      serializeSuite(getMain, hidePrints: false, beforeLoad: handleSourceMap);
   postMessageChannel().pipe(channel);
 }

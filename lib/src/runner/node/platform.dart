@@ -14,15 +14,18 @@ import 'package:path/path.dart' as p;
 import 'package:stream_channel/stream_channel.dart';
 import 'package:yaml/yaml.dart';
 
+import '../../backend/compiler.dart';
 import '../../backend/runtime.dart';
 import '../../backend/suite_platform.dart';
 import '../../util/io.dart';
+import '../../util/serialize.dart';
 import '../../util/stack_trace_mapper.dart';
 import '../../utils.dart';
 import '../application_exception.dart';
 import '../configuration.dart';
 import '../configuration/suite.dart';
-import '../js/compiler_pool.dart';
+import '../js/dart2js_pool.dart';
+import '../js/ddc_runner.dart';
 import '../js/executable_settings.dart';
 import '../load_exception.dart';
 import '../plugin/customizable_platform.dart';
@@ -37,8 +40,16 @@ class NodePlatform extends PlatformPlugin
   /// The test runner configuration.
   final Configuration _config;
 
-  /// The [CompilerPool] managing active instances of `dart2js`.
-  final _compilers = new CompilerPool(["-Dnode=true"]);
+  /// The [Dart2jsPool] managing active instances of `dart2js`.
+  final _dart2js = new Dart2jsPool(["-Dnode=true"]);
+
+  /// The [DdcRunner] managing instances of `dartdevc`.
+  DdcRunner get _ddc {
+    __ddc ??= new DdcRunner();
+    return __ddc;
+  }
+
+  DdcRunner __ddc;
 
   /// The temporary directory in which compiled JS is emitted.
   final _compiledDir = createTempDir();
@@ -78,14 +89,39 @@ class NodePlatform extends PlatformPlugin
 
   Future<RunnerSuite> load(String path, SuitePlatform platform,
       SuiteConfiguration suiteConfig, Object message) async {
+    assert(platform == TestPlatform.nodeJS);
+
     var pair = await _loadChannel(path, platform.runtime, suiteConfig);
     var controller = deserializeSuite(path, platform, suiteConfig,
         new PluginEnvironment(), pair.first, message);
 
-    controller.channel("test.node.mapper").sink.add(pair.last?.serialize());
+    Object sourceMapCommand;
+    if (!suiteConfig.jsTrace) {
+      if (pair.last != null) {
+        sourceMapCommand = {"type": "mapper", "mapper": pair.last.serialize()};
+      } else if (platform.compiler == Compiler.ddc) {
+        sourceMapCommand = await _ddcSourceMapCommand;
+      }
+    }
+
+    controller.channel("test.js.sourceMap").sink.add(sourceMapCommand);
 
     return await controller.suite;
   }
+
+  /// Returns the command to send to the worker to tell it to load source maps
+  /// from DDC.
+  Future<Object> get _ddcSourceMapCommand =>
+      _ddcSourceMapCommandMemo.runOnce(() async {
+        return {
+          "type": "ddc",
+          "packageResolver":
+              serializePackageResolver(await PackageResolver.current.asSync),
+          "mapDirUrl": p.toUri(_ddc.dir).toString()
+        };
+      });
+
+  final _ddcSourceMapCommandMemo = new AsyncMemoizer<Object>();
 
   /// Loads a [StreamChannel] communicating with the test suite at [path].
   ///
@@ -136,7 +172,7 @@ class NodePlatform extends PlatformPlugin
     var jsPath = p.join(dir, p.basename(path) + ".node_test.dart.js");
 
     if (_config.pubServeUrl == null) {
-      await _compilers.compile('''
+      await _dart2js.compile('''
         import "package:test/src/bootstrap/node.dart";
 
         import "${p.toUri(p.absolute(path))}" as test;
@@ -240,7 +276,7 @@ class NodePlatform extends PlatformPlugin
   }
 
   Future close() => _closeMemo.runOnce(() async {
-        await _compilers.close();
+        await _dart2js.close();
 
         if (_config.pubServeUrl == null) {
           new Directory(_compiledDir).deleteSync(recursive: true);

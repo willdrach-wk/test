@@ -12,7 +12,6 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../backend/runtime.dart';
 import '../../backend/suite_platform.dart';
-import '../../util/stack_trace_mapper.dart';
 import '../application_exception.dart';
 import '../configuration/suite.dart';
 import '../environment.dart';
@@ -204,11 +203,11 @@ class BrowserManager {
   /// suite. [path] is the path of the original test suite file, which is used
   /// for reporting. [suiteConfig] is the configuration for the test suite.
   ///
-  /// If [mapper] is passed, it's used to map stack traces for errors coming
-  /// from this test suite.
+  /// If [sourceMapCommand] is passed, it's sent to the worker to tell it how to
+  /// set up stack trace mapping. It should be JSON-serializable.
   Future<RunnerSuite> load(
       String path, Uri url, SuiteConfiguration suiteConfig, Object message,
-      {StackTraceMapper mapper}) async {
+      {Object sourceMapCommand}) async {
     url = url.replace(
         fragment: Uri.encodeFull(JSON.encode({
       "metadata": suiteConfig.metadata.serialize(),
@@ -245,7 +244,7 @@ class BrowserManager {
         controller = deserializeSuite(path, new SuitePlatform(_runtime),
             suiteConfig, await _environment, suiteChannel, message);
 
-        controller.channel("test.browser.mapper").sink.add(mapper?.serialize());
+        controller.channel("test.js.sourceMap").sink.add(sourceMapCommand);
 
         _controllers.add(controller);
         return await controller.suite;

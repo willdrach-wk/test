@@ -22,7 +22,7 @@ final _dart2jsStatus =
 /// A pool of `dart2js` instances.
 ///
 /// This limits the number of compiler instances running concurrently.
-class CompilerPool {
+class Dart2jsPool {
   /// The test runner configuration.
   final _config = Configuration.current;
 
@@ -42,13 +42,11 @@ class CompilerPool {
   final List<String> _extraArgs;
 
   /// Creates a compiler pool that multiple instances of `dart2js` at once.
-  CompilerPool([Iterable<String> extraArgs])
+  Dart2jsPool([Iterable<String> extraArgs])
       : _pool = new Pool(Configuration.current.concurrency),
         _extraArgs = extraArgs?.toList() ?? const [];
 
   /// Compiles [code] to [jsPath].
-  ///
-  /// This wraps the Dart code in the standard browser-testing wrapper.
   ///
   /// The returned [Future] will complete once the `dart2js` process completes
   /// *and* all its output has been printed to the command line.

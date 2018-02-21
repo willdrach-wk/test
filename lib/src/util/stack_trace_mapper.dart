@@ -2,10 +2,11 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-import 'package:collection/collection.dart';
 import 'package:package_resolver/package_resolver.dart';
 import 'package:source_map_stack_trace/source_map_stack_trace.dart' as mapper;
 import 'package:source_maps/source_maps.dart';
+
+import 'serialize.dart';
 
 /// A class for mapping JS stack traces to Dart stack traces using source maps.
 class StackTraceMapper {
@@ -32,6 +33,14 @@ class StackTraceMapper {
         _packageResolver = packageResolver,
         _sdkRoot = sdkRoot;
 
+  /// Creates a [StackTraceMapper] from a mapping that's already parsed.
+  StackTraceMapper.parsed(this._mapping,
+      {SyncPackageResolver packageResolver, Uri sdkRoot})
+      : _mapContents = null,
+        _mapUrl = null,
+        _packageResolver = packageResolver,
+        _sdkRoot = sdkRoot;
+
   /// Converts [trace] into a Dart stack trace.
   StackTrace mapStackTrace(StackTrace trace) {
     _mapping ??= parseExtended(_mapContents, mapUrl: _mapUrl);
@@ -44,9 +53,7 @@ class StackTraceMapper {
     return {
       'mapContents': _mapContents,
       'sdkRoot': _sdkRoot?.toString(),
-      'packageConfigMap':
-          _serializePackageConfigMap(_packageResolver.packageConfigMap),
-      'packageRoot': _packageResolver.packageRoot?.toString(),
+      'packageResolver': serializePackageResolver(_packageResolver),
       'mapUrl': _mapUrl?.toString(),
     };
   }
@@ -55,29 +62,10 @@ class StackTraceMapper {
   /// representation.
   static StackTraceMapper deserialize(Map serialized) {
     if (serialized == null) return null;
-    String packageRoot = serialized['packageRoot'] as String ?? '';
     return new StackTraceMapper(serialized['mapContents'],
         sdkRoot: Uri.parse(serialized['sdkRoot']),
-        packageResolver: packageRoot.isNotEmpty
-            ? new SyncPackageResolver.root(Uri.parse(serialized['packageRoot']))
-            : new SyncPackageResolver.config(
-                _deserializePackageConfigMap(serialized['packageConfigMap'])),
+        packageResolver:
+            deserializePackageResolver(serialized['packageResolver']),
         mapUrl: Uri.parse(serialized['mapUrl']));
-  }
-
-  /// Converts a [packageConfigMap] into a format suitable for JSON
-  /// serialization.
-  static Map<String, String> _serializePackageConfigMap(
-      Map<String, Uri> packageConfigMap) {
-    if (packageConfigMap == null) return null;
-    return mapMap(packageConfigMap, value: (_, value) => '$value');
-  }
-
-  /// Converts a serialized package config map into a format suitable for
-  /// the [PackageResolver]
-  static Map<String, Uri> _deserializePackageConfigMap(
-      Map<String, String> serialized) {
-    if (serialized == null) return null;
-    return mapMap(serialized, value: (_, value) => Uri.parse(value));
   }
 }
