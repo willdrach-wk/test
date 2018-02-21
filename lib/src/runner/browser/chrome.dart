@@ -7,7 +7,7 @@ import 'dart:io';
 
 import '../../backend/runtime.dart';
 import '../../util/io.dart';
-import '../executable_settings.dart';
+import '../js/executable_settings.dart';
 import 'browser.dart';
 import 'default_settings.dart';
 

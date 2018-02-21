@@ -5,7 +5,7 @@
 import 'dart:collection';
 
 import '../../backend/runtime.dart';
-import '../executable_settings.dart';
+import '../js/executable_settings.dart';
 
 /// Default settings for starting browser executables.
 final defaultSettings = new UnmodifiableMapView({

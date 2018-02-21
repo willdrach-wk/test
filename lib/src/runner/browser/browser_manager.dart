@@ -16,7 +16,7 @@ import '../../util/stack_trace_mapper.dart';
 import '../application_exception.dart';
 import '../configuration/suite.dart';
 import '../environment.dart';
-import '../executable_settings.dart';
+import '../js/executable_settings.dart';
 import '../plugin/platform_helpers.dart';
 import '../runner_suite.dart';
 import 'browser.dart';
