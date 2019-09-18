@@ -14,6 +14,7 @@ dependencies:
   boolean_selector: ^1.0.0
   collection: ^1.8.0
   coverage: ^0.13.2
+  dwds: ^0.6.2
   glob: ^1.0.0
   io: ^0.3.0
   meta: ^1.1.5
@@ -37,3 +38,5 @@ dependencies:
 dependency_overrides:
   test_api:
     path: ../test_api
+  dwds:
+    path: ../../../webdev/dwds

@@ -8,6 +8,7 @@ import "dart:io";
 
 import 'package:async/async.dart';
 import 'package:coverage/coverage.dart';
+import 'package:dwds/dwds.dart';
 
 import 'package:test_api/src/utils.dart'; // ignore: implementation_imports
 
@@ -72,6 +73,9 @@ class _Debugger {
   /// Whether to gather coverage
   final bool _coverage;
 
+  /// The coverage handler from dwds
+  Coverage _coverageHandler;
+
   /// The console through which the user can control the debugger.
   ///
   /// This is only visible when the test environment is paused, so as not to
@@ -111,6 +115,8 @@ class _Debugger {
     try {
       if (!_coverage) {
         await _pause();
+      } else {
+        await _startCoverage();
       }
       if (_closed) return;
 
@@ -199,26 +205,43 @@ class _Debugger {
     if (_suite.platform == null) return;
     if (!_suite.environment.supportsDebugging) return;
 
-    try {
-      if (!_json) {
+    if (!_json) {
+      _reporter.pause();
+
+      var runtime = _suite.platform.runtime;
+      if (runtime.isDartVM) {
+        final url = _suite.environment.observatoryUrl;
+        final cov = await collect(url, true, false, true, null);
+        final outfile = File('coverage/coverage.json')
+          ..createSync(recursive: true);
+        IOSink out = outfile.openWrite();
+        out.write(json.encode(cov));
+        await out.close();
+      } else if (_coverageHandler != null) {
+        print('got chrome coverage');
+        await _coverageHandler.collect();
+      }
+      _reporter.resume();
+    }
+  }
+
+  Future<Null> _startCoverage() async {
+    print('starting coverage');
+    if (_suite.platform == null) return;
+    if (!_suite.environment.supportsDebugging) return;
+
+    if (!_json) {
+      var runtime = _suite.platform.runtime;
+      final url = _suite.environment.remoteDebuggerUrl;
+      if (!runtime.isDartVM && url != null) {
         _reporter.pause();
 
-        var runtime = _suite.platform.runtime;
-        if (runtime.isDartVM) {
-          var url = _suite.environment.observatoryUrl;
-          final cov = await collect(url, true, false, true, null);
-          print('got cov!');
-          final outfile = File('coverage/coverage.json')..createSync(recursive: true);
-          IOSink out = outfile.openWrite();
-          out.write(json.encode(cov));
-          await out.close();
-        } else if (runtime.isHeadless) {
-          var url = _suite.environment.remoteDebuggerUrl;
-          // TODO: gather chrome coverage here
-        }
+        final logger = (level, text) => print(text);
+        _coverageHandler =
+        await Coverage.init(logger, url.toString(), null, null, null, null);
+        await _coverageHandler.start();
+        _reporter.resume();
       }
-    } finally {
-      if (!_json) _reporter.resume();
     }
   }
 
