@@ -6,8 +6,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:coverage/coverage.dart';
-import 'package:dwds/dwds.dart';
+import 'package:dwds/src/debugging/profiler.dart';
+import 'package:dwds/src/debugging/sources.dart';
+import 'package:dwds/src/debugging/webkit_debugger.dart';
 import 'package:dwds/asset_handler.dart';
+import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:shelf/shelf.dart';
 import 'package:shelf_proxy/shelf_proxy.dart';
@@ -29,15 +32,53 @@ class TestAssetHandler implements AssetHandler {
 
   @override
   Future<Response> getRelativeAsset(String path) async => handler(
-      Request('GET', Uri.parse('${this._assetPrefix.toString()}/$path')));
+      Request('GET', Uri.parse('${this._assetPrefix.toString()}/$path'), url: Uri.parse(path.substring(1))));
+}
+
+Future<WebkitDebugger> getDebugConnection(String debuggerUrl) async {
+  final response = await http.get(debuggerUrl.toString() + '/json');
+  final url = jsonDecode(response.body)[0]['webSocketDebuggerUrl'] as String;
+
+  final wipConnection = await WipConnection.connect(url);
+  return WebkitDebugger(WipDebugger(wipConnection));
+}
+
+Future<WebkitDebugger> startCoverage(LiveSuiteController controller) async {
+  final RunnerSuite suite = controller.liveSuite.suite;
+  if (suite.platform.runtime.isBrowser &&
+        suite.environment.supportsDebugging &&
+        suite.environment.remoteDebuggerUrl != null) {
+    final debugger = await getDebugConnection(suite.environment.remoteDebuggerUrl.toString());
+    final profiler = Profiler(debugger);
+    await profiler.startPreciseCoverage();
+    final first =  debugger.onScriptParsed.first;
+    await debugger.enable();
+    await first;
+    print('script parsed dang');
+    return debugger;
+  }
+  return null;
 }
 
 /// Collects coverage and outputs to the [coverage] path.
 Future<void> gatherCoverage(
-    String coverage, LiveSuiteController controller) async {
+    String coverage, LiveSuiteController controller, {WebkitDebugger debugger}) async {
   final RunnerSuite suite = controller.liveSuite.suite;
 
-  if (suite.platform.runtime.isDartVM) {
+  if (debugger != null) {
+    // set up debugger connection
+    final sources = Sources(TestAssetHandler(suite.config.baseUrl), debugger, (_, __) {}, '');
+
+    debugger.onScriptParsed.listen(sources.scriptParsed);
+
+    final profiler = Profiler(debugger);
+
+    final cov = (await profiler.takePreciseCoverage()).result;
+
+    final script1 = Uri.parse(cov['result'][0]['url'] as String);
+    final table = sources.tokenPosTableFor(script1.path);
+    print(table);
+  } else if (suite.platform.runtime.isDartVM) {
     final String isolateId =
         Uri.parse(suite.environment.observatoryUrl.fragment)
             .queryParameters['isolateId'];
@@ -52,26 +93,5 @@ Future<void> gatherCoverage(
     out.write(json.encode(cov));
     await out.flush();
     await out.close();
-  } else if (suite.platform.runtime.isBrowser &&
-      suite.environment.supportsDebugging &&
-      suite.environment.remoteDebuggerUrl != null) {
-    print(' HERE! ${suite.environment.remoteDebuggerUrl.toString()}');
-    final chromeConnection = ChromeConnection('localhost', suite.environment.remoteDebuggerUrl.port);
-    print(' TABS! ${(await chromeConnection.getTabs()).length}');
-    final dwds = await Dwds.start(
-        assetHandler: TestAssetHandler(suite.config.baseUrl),
-        buildResults: Stream.empty(),
-        chromeConnection: () async {
-          return chromeConnection;
-        },
-        enableDebugging: true,
-        hostname: 'localhost');
-    print(' we have a dwds instance ');
-    final connectedApp = await dwds.connectedApps.first;
-    print(' we have a connected app! ');
-    final debugConnection = await dwds.debugConnection(connectedApp);
-    print(' we have a debugConnection ');
-    final response = await debugConnection.vmService.callServiceExtension('ext.dwds.enableProfiler');
-    print(' GOT A RESPONSE HOLY SH*T ${response.toString()}');
   }
 }

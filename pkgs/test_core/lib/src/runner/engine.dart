@@ -282,9 +282,11 @@ class Engine {
 
         await _runPool.withResource(() async {
           if (_closed) return;
+          var debugger;
+          if (_coverage != null) debugger = await startCoverage(controller);
           await _runGroup(controller, controller.liveSuite.suite.group, []);
           controller.noMoreLiveTests();
-          if (_coverage != null) await gatherCoverage(_coverage, controller);
+          if (_coverage != null) await gatherCoverage(_coverage, controller, debugger: debugger);
           loadResource.allowRelease(() => controller.close());
         });
       }());
