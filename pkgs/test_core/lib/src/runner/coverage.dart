@@ -2,6 +2,7 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -43,39 +44,43 @@ Future<WebkitDebugger> getDebugConnection(String debuggerUrl) async {
   return WebkitDebugger(WipDebugger(wipConnection));
 }
 
-Future<WebkitDebugger> startCoverage(LiveSuiteController controller) async {
+Future<Map> startCoverage(LiveSuiteController controller) async {
   final RunnerSuite suite = controller.liveSuite.suite;
   if (suite.platform.runtime.isBrowser &&
         suite.environment.supportsDebugging &&
         suite.environment.remoteDebuggerUrl != null) {
     final debugger = await getDebugConnection(suite.environment.remoteDebuggerUrl.toString());
+
+    final sources = Sources(TestAssetHandler(suite.config.baseUrl), debugger, (_, __) {}, '');
+
+    runZoned(() {
+      debugger.onScriptParsed.listen(sources.scriptParsed);
+    });
+
+    await debugger.sendCommand('Page.enable');
+    await debugger.enable();
+
     final profiler = Profiler(debugger);
     await profiler.startPreciseCoverage();
-    final first =  debugger.onScriptParsed.first;
-    await debugger.enable();
-    await first;
-    print('script parsed dang');
-    return debugger;
+
+    return {'debugger': debugger, 'sources': sources};
   }
   return null;
 }
 
 /// Collects coverage and outputs to the [coverage] path.
 Future<void> gatherCoverage(
-    String coverage, LiveSuiteController controller, {WebkitDebugger debugger}) async {
+    String coverage, LiveSuiteController controller, {WebkitDebugger debugger, Sources sources}) async {
   final RunnerSuite suite = controller.liveSuite.suite;
 
   if (debugger != null) {
     // set up debugger connection
-    final sources = Sources(TestAssetHandler(suite.config.baseUrl), debugger, (_, __) {}, '');
-
-    debugger.onScriptParsed.listen(sources.scriptParsed);
-
     final profiler = Profiler(debugger);
 
     final cov = (await profiler.takePreciseCoverage()).result;
 
     final script1 = Uri.parse(cov['result'][0]['url'] as String);
+    print('Script1 $script1');
     final table = sources.tokenPosTableFor(script1.path);
     print(table);
   } else if (suite.platform.runtime.isDartVM) {

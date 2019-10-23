@@ -7,6 +7,8 @@ import 'dart:collection';
 
 import 'package:async/async.dart' hide Result;
 import 'package:collection/collection.dart';
+import 'package:dwds/src/debugging/sources.dart';
+import 'package:dwds/src/debugging/webkit_debugger.dart';
 import 'package:pedantic/pedantic.dart';
 import 'package:pool/pool.dart';
 import 'package:test_api/src/backend/group.dart'; // ignore: implementation_imports
@@ -286,7 +288,7 @@ class Engine {
           if (_coverage != null) debugger = await startCoverage(controller);
           await _runGroup(controller, controller.liveSuite.suite.group, []);
           controller.noMoreLiveTests();
-          if (_coverage != null) await gatherCoverage(_coverage, controller, debugger: debugger);
+          if (_coverage != null) await gatherCoverage(_coverage, controller, debugger: debugger['debugger'] as WebkitDebugger, sources: debugger['sources'] as Sources);
           loadResource.allowRelease(() => controller.close());
         });
       }());
