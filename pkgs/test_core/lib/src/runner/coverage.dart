@@ -32,8 +32,15 @@ class TestAssetHandler implements AssetHandler {
       _handler ??= proxyHandler(this._assetPrefix.toString());
 
   @override
-  Future<Response> getRelativeAsset(String path) async => handler(
-      Request('GET', Uri.parse('${this._assetPrefix.toString()}/$path'), url: Uri.parse(path.substring(1))));
+  Future<Response> getRelativeAsset(String path) async {
+    final url = '${_assetPrefix.toString()}/$path';
+    print('fetching url: $url');
+    final uri = Uri.parse(url);
+    print('fetching uri: $uri');
+    final pathUri = Uri.parse(path);
+    print('fetching path URI: $pathUri');
+    return handler(Request('GET', uri, url: pathUri));
+  }
 }
 
 Future<WebkitDebugger> getDebugConnection(String debuggerUrl) async {
@@ -52,6 +59,7 @@ Future<Map> startCoverage(LiveSuiteController controller) async {
     final debugger = await getDebugConnection(suite.environment.remoteDebuggerUrl.toString());
 
     final sources = Sources(TestAssetHandler(suite.config.baseUrl), debugger, (_, __) {}, '');
+    print('test asset handler base URL: ${suite.config.baseUrl}');
 
     runZoned(() {
       debugger.onScriptParsed.listen(sources.scriptParsed);

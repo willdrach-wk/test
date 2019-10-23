@@ -224,7 +224,9 @@ class BrowserPlatform extends PlatformPlugin
       SuiteConfiguration suiteConfig, Object message) async {
     var browser = platform.runtime;
     assert(suiteConfig.runtimes.contains(browser.identifier));
-    suiteConfig = suiteConfig.change(baseUrl: url);
+    final baseUrl = Uri.parse(url.toString());
+    baseUrl.replace(path: '');
+    suiteConfig = suiteConfig.change(baseUrl: baseUrl);
 
     if (!browser.isBrowser) {
       throw ArgumentError("$browser is not a browser.");
