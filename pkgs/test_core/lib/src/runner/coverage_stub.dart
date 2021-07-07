@@ -3,7 +3,11 @@
 // BSD-style license that can be found in the LICENSE file.
 
 import 'live_suite_controller.dart';
+import 'package:dwds/src/debugging/sources.dart';
+import 'package:dwds/src/debugging/webkit_debugger.dart';
 
-Future<void> gatherCoverage(String coverage, LiveSuiteController controller) =>
+Future<WebkitDebugger> startCoverage(LiveSuiteController controller) => throw UnsupportedError('Coverage is only supported through the test runner');
+
+Future<void> gatherCoverage(String coverage, LiveSuiteController controller, {WebkitDebugger debugger, Sources sources}) =>
     throw UnsupportedError(
         'Coverage is only supported through the test runner.');

@@ -71,6 +71,8 @@ class BrowserPlatform extends PlatformPlugin
   final _secret = Uri.encodeComponent(randomBase64(24));
 
   /// The URL for this server.
+  
+  // TODO: starting place!!!
   Uri get url => _server.url.resolve(_secret + "/");
 
   /// A [OneOffHandler] for servicing WebSocket connections for
@@ -222,6 +224,9 @@ class BrowserPlatform extends PlatformPlugin
       SuiteConfiguration suiteConfig, Object message) async {
     var browser = platform.runtime;
     assert(suiteConfig.runtimes.contains(browser.identifier));
+    final baseUrl = Uri.parse(url.toString());
+    baseUrl.replace(path: '');
+    suiteConfig = suiteConfig.change(baseUrl: baseUrl);
 
     if (!browser.isBrowser) {
       throw ArgumentError("$browser is not a browser.");
